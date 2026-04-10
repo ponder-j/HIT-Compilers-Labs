@@ -5,10 +5,20 @@
 extern int error;
 int yycolumn = 1;
 
+extern int pending_error_line;
+extern int last_error_lineno;
+
 // 定义 YY_USER_ACTION 宏，更新位置信息
 // YY_USER_ACTION 在每次匹配成功后先于后续代码块执行
 // 实验其实并没有要求实现行内列号
 #define YY_USER_ACTION \
+    if (pending_error_line != -1 && yylineno > pending_error_line) { \
+        if (last_error_lineno != pending_error_line) { \
+            printf("Error type B at Line %d: Syntax error.\n", pending_error_line); \
+            last_error_lineno = pending_error_line; \
+        } \
+        pending_error_line = -1; \
+    } \
     yylloc.first_line = yylloc.last_line = yylineno; \
     yylloc.first_column = yycolumn; \
     yylloc.last_column = yycolumn + yyleng - 1; \
@@ -93,5 +103,14 @@ id          {letter}({letter}|{digit})*
 \n          { yycolumn = 1; }
 
 .           { error++; printf("Error type A at Line %d: Mysterious characters \"%s\".\n", yylineno, yytext); }
+
+<<EOF>>     {
+                if (pending_error_line != -1 && last_error_lineno != pending_error_line) {
+                    printf("Error type B at Line %d: Syntax error.\n", pending_error_line);
+                    last_error_lineno = pending_error_line;
+                    pending_error_line = -1;
+                }
+                yyterminate();
+            }
 
 %%

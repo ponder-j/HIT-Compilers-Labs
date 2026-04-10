@@ -10,6 +10,7 @@
     extern int error;
 
     int last_error_lineno = -1;
+    int pending_error_line = -1;
 
     void yyerror(char const *msg);
 %}
@@ -167,14 +168,27 @@ Args        : Exp COMMA Args { $$ = createNode("Args", "", @$.first_line, 0); ad
 %%
 
 void yyerror(char const *msg) {
-    // Bison 内部产生的默认消息是 "syntax error"，不输出，等待具体错误规则给出更精确的信息
     if (!strcmp(msg, "syntax error")) {
+        if (pending_error_line == -1) {
+            pending_error_line = yylineno;
+        }
         return;
     }
 
-    // 同一行只报告一次错误
-    if (last_error_lineno == yylineno) return;
-    last_error_lineno = yylineno;
+    if (pending_error_line != -1) {
+        if (pending_error_line == yylineno) {
+            pending_error_line = -1;
+        } else {
+            if (last_error_lineno != pending_error_line) {
+                printf("Error type B at Line %d: Syntax error.\n", pending_error_line);
+                last_error_lineno = pending_error_line;
+            }
+            pending_error_line = -1;
+        }
+    }
 
-    printf("Error type B at Line %d: %s\n", yylineno, msg);
+    if (last_error_lineno != yylineno) {
+        printf("Error type B at Line %d: %s\n", yylineno, msg);
+        last_error_lineno = yylineno;
+    }
 }
