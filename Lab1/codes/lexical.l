@@ -92,6 +92,6 @@ id          {letter}({letter}|{digit})*
 [ \t\r]+    { /* 空白字符略过 */ }
 \n          { yycolumn = 1; }
 
-.           { error++; printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+.           { error++; printf("Error type A at Line %d: Mysterious characters \"%s\".\n", yylineno, yytext); }
 
 %%

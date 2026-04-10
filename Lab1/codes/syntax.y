@@ -18,6 +18,8 @@
     struct Node* node;
 }
 
+%define parse.error verbose
+
 /* 终结符定义，使用 union 中的 node 类型 */
 %token <node> INT FLOAT ID SEMI COMMA ASSIGNOP RELOP PLUS MINUS STAR DIV AND OR DOT NOT TYPE LP RP LB RB LC RC STRUCT RETURN IF ELSE WHILE
 
