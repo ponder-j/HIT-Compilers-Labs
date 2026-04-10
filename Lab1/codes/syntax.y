@@ -59,7 +59,7 @@ ExtDefList  : ExtDef ExtDefList { $$ = createNode("ExtDefList", "", @$.first_lin
 ExtDef      : Specifier ExtDecList SEMI { $$ = createNode("ExtDef", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             | Specifier SEMI            { $$ = createNode("ExtDef", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
             | Specifier FunDec CompSt   { $$ = createNode("ExtDef", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | error SEMI                { error++; }
+            | error SEMI                { $$ = NULL; error++; }
             ;
 
 ExtDecList  : VarDec { $$ = createNode("ExtDecList", "", @$.first_line, 0); addNode(1, $$, $1); }
@@ -85,12 +85,12 @@ Tag         : ID { $$ = createNode("Tag", "", @$.first_line, 0); addNode(1, $$, 
 /* Declarators */
 VarDec      : ID { $$ = createNode("VarDec", "", @$.first_line, 0); addNode(1, $$, $1); }
             | VarDec LB INT RB { $$ = createNode("VarDec", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
-            | VarDec LB error RB { error++; yyerror("Missing \"]\"."); }
+            | VarDec LB error RB { $$ = NULL; error++; yyerror("Missing \"]\"."); }
             ;
 
 FunDec      : ID LP VarList RP { $$ = createNode("FunDec", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
             | ID LP RP { $$ = createNode("FunDec", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | ID LP error RP { error++; yyerror("Missing \")\"."); }
+            | ID LP error RP { $$ = NULL; error++; yyerror("Missing \")\"."); }
             ;
 
 VarList     : ParamDec COMMA VarList { $$ = createNode("VarList", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
@@ -102,7 +102,7 @@ ParamDec    : Specifier VarDec { $$ = createNode("ParamDec", "", @$.first_line, 
 
 /* Statements */
 CompSt      : LC DefList StmtList RC { $$ = createNode("CompSt", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
-            | error RC { error++; yyerror("Missing \"}\"."); }
+            | error RC { $$ = NULL; error++; yyerror("Missing \"}\"."); }
             ;
 
 StmtList    : Stmt StmtList { $$ = createNode("StmtList", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
@@ -116,7 +116,7 @@ Stmt        : Exp SEMI { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(
             | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(5, $$, $1, $2, $3, $4, $5); }
             | IF LP Exp RP Stmt ELSE Stmt { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(7, $$, $1, $2, $3, $4, $5, $6, $7); }
             | WHILE LP Exp RP Stmt { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(5, $$, $1, $2, $3, $4, $5); }
-            | error SEMI { error++; yyerror("Missing \";\"."); }
+            | error SEMI { $$ = NULL; error++; yyerror("Missing \";\"."); }
             ;
 
 /* Local Definitions */
@@ -125,7 +125,7 @@ DefList     : Def DefList { $$ = createNode("DefList", "", @$.first_line, 0); ad
             ;
 
 Def         : Specifier DecList SEMI { $$ = createNode("Def", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | error SEMI { error++; }
+            | error SEMI { $$ = NULL; error++; }
             ;
 
 DecList     : Dec { $$ = createNode("DecList", "", @$.first_line, 0); addNode(1, $$, $1); }
@@ -155,9 +155,9 @@ Exp         : Exp ASSIGNOP Exp { $$ = createNode("Exp", "", @$.first_line, 0); a
             | ID               { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
             | INT              { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
             | FLOAT            { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
-            | Exp LB error RB  { error++; yyerror("Missing \"]\"."); }
-            | LP error RP      { error++; yyerror("Missing \")\"."); }
-            | ID LP error RP   { error++; yyerror("Missing \")\"."); }
+            | Exp LB error RB  { $$ = NULL; error++; yyerror("Missing \"]\"."); }
+            | LP error RP      { $$ = NULL; error++; yyerror("Missing \")\"."); }
+            | ID LP error RP   { $$ = NULL; error++; yyerror("Missing \")\"."); }
             ;
 
 Args        : Exp COMMA Args { $$ = createNode("Args", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
