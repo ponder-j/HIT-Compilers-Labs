@@ -57,10 +57,12 @@ id          {letter}({letter}|{digit})*
 "while"       { yylval.node = createNode("WHILE", yytext, yylineno, 1); return WHILE; }
 
 {dec_int}|{oct_int}|{hex_int} { yylval.node = createNode("INT", yytext, yylineno, 1); return INT; }
+/* 直接匹配错误的 8/16 进制数进行报错 */
 {err_oct}   { error++; printf("Error type A at Line %d: Illegal octal number \"%s\".\n", yylineno, yytext); yylval.node = createNode("INT", yytext, yylineno, 1); return INT; }
 {err_hex}   { error++; printf("Error type A at Line %d: Illegal hexadecimal number \"%s\".\n", yylineno, yytext); yylval.node = createNode("INT", yytext, yylineno, 1); return INT; }
 
 {float_norm}|{float_exp} { yylval.node = createNode("FLOAT", yytext, yylineno, 1); return FLOAT; }
+/* 直接匹配错误的浮点数进行报错 */
 {err_float} { error++; printf("Error type A at Line %d: Illegal floating point number \"%s\".\n", yylineno, yytext); yylval.node = createNode("FLOAT", yytext, yylineno, 1); return FLOAT; }
 
 {id}        { yylval.node = createNode("ID", yytext, yylineno, 1); return ID; }
@@ -84,7 +86,7 @@ id          {letter}({letter}|{digit})*
 "{"         { yylval.node = createNode("LC", yytext, yylineno, 1); return LC; }
 "}"         { yylval.node = createNode("RC", yytext, yylineno, 1); return RC; }
 
-
+/* 跨行注释： 匹配 /*，直到连续匹配到 * 和 / 为止 */
 "/*"        {
                 char c, prev = 0;
                 while ((c = input()) != 0) {
@@ -93,6 +95,7 @@ id          {letter}({letter}|{digit})*
                     prev = c;
                 }
             }
+/* 单行注释 */
 "//"        {
                 char c;
                 while ((c = input()) != '\n' && c != 0);
@@ -102,8 +105,10 @@ id          {letter}({letter}|{digit})*
 [ \t\r]+    { /* 空白字符略过 */ }
 \n          { yycolumn = 1; }
 
+/* . 表示其他所有未匹配的字符 */
 .           { error++; printf("Error type A at Line %d: Mysterious characters \"%s\".\n", yylineno, yytext); }
 
+/* 文件结束符：需要手动进行一次 YY_USER_ACTION 防止漏报 */
 <<EOF>>     {
                 if (pending_error_line != -1 && last_error_lineno != pending_error_line) {
                     printf("Error type B at Line %d: Syntax error.\n", pending_error_line);
