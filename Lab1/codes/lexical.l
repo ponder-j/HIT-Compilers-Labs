@@ -6,7 +6,7 @@ extern int error;
 int yycolumn = 1;
 
 extern int pending_error_line;
-extern int last_error_lineno;
+extern int last_error_lineno;  // 确保同一行最多只打印一次报错，打印完后将挂起状态重置
 
 // 定义 YY_USER_ACTION 宏，更新位置信息
 // YY_USER_ACTION 在每次匹配成功后先于后续代码块执行
