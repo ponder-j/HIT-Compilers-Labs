@@ -1,0 +1,23 @@
+# 编译生成的中间文件和依赖文件
+*.o
+*.d
+
+# Flex 编译产物
+lex.yy.c
+
+# Bison 编译产物
+syntax.tab.c
+syntax.tab.h
+syntax.output
+
+# 最终的可执行文件
+parser
+
+# 测试结果或日志输出文件
+result.txt
+
+# 临时文件或备份文件
+*~
+
+# macOS 系统自动生成文件
+.DS_Store
