@@ -1,12 +1,15 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
     #include "tree.h"
     #include "lex.yy.c"
     
     extern int yylineno;
     extern Node* Root;
     extern int error;
+
+    int last_error_lineno = -1;
 
     void yyerror(char const *msg);
 %}
@@ -18,7 +21,7 @@
     struct Node* node;
 }
 
-%define parse.error verbose
+/* %define parse.error verbose */
 
 /* 终结符定义，使用 union 中的 node 类型 */
 %token <node> INT FLOAT ID SEMI COMMA ASSIGNOP RELOP PLUS MINUS STAR DIV AND OR DOT NOT TYPE LP RP LB RB LC RC STRUCT RETURN IF ELSE WHILE
@@ -82,10 +85,12 @@ Tag         : ID { $$ = createNode("Tag", "", @$.first_line, 0); addNode(1, $$, 
 /* Declarators */
 VarDec      : ID { $$ = createNode("VarDec", "", @$.first_line, 0); addNode(1, $$, $1); }
             | VarDec LB INT RB { $$ = createNode("VarDec", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
+            | VarDec LB error RB { error++; yyerror("Missing \"]\"."); }
             ;
 
 FunDec      : ID LP VarList RP { $$ = createNode("FunDec", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
             | ID LP RP { $$ = createNode("FunDec", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | ID LP error RP { error++; yyerror("Missing \")\"."); }
             ;
 
 VarList     : ParamDec COMMA VarList { $$ = createNode("VarList", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
@@ -97,7 +102,7 @@ ParamDec    : Specifier VarDec { $$ = createNode("ParamDec", "", @$.first_line, 
 
 /* Statements */
 CompSt      : LC DefList StmtList RC { $$ = createNode("CompSt", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
-            | error RC { error++; }
+            | error RC { error++; yyerror("Missing \"}\"."); }
             ;
 
 StmtList    : Stmt StmtList { $$ = createNode("StmtList", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
@@ -111,7 +116,7 @@ Stmt        : Exp SEMI { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(
             | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(5, $$, $1, $2, $3, $4, $5); }
             | IF LP Exp RP Stmt ELSE Stmt { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(7, $$, $1, $2, $3, $4, $5, $6, $7); }
             | WHILE LP Exp RP Stmt { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(5, $$, $1, $2, $3, $4, $5); }
-            | error SEMI { error++; yyerror("Syntax error."); }
+            | error SEMI { error++; yyerror("Missing \";\"."); }
             ;
 
 /* Local Definitions */
@@ -150,7 +155,9 @@ Exp         : Exp ASSIGNOP Exp { $$ = createNode("Exp", "", @$.first_line, 0); a
             | ID               { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
             | INT              { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
             | FLOAT            { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
-            | Exp LB error RB  { error++; }
+            | Exp LB error RB  { error++; yyerror("Missing \"]\"."); }
+            | LP error RP      { error++; yyerror("Missing \")\"."); }
+            | ID LP error RP   { error++; yyerror("Missing \")\"."); }
             ;
 
 Args        : Exp COMMA Args { $$ = createNode("Args", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
@@ -160,11 +167,14 @@ Args        : Exp COMMA Args { $$ = createNode("Args", "", @$.first_line, 0); ad
 %%
 
 void yyerror(char const *msg) {
-    // 根据要求，确保只输出特定格式。
-    // 如果 msg 不是自己手动调用的内容，则统一打出 "Syntax error." 格式。
+    // Bison 内部产生的默认消息是 "syntax error"，不输出，等待具体错误规则给出更精确的信息
     if (!strcmp(msg, "syntax error")) {
-        printf("Error type B at Line %d: Syntax error.\n", yylineno);
-    } else {
-        printf("Error type B at Line %d: %s\n", yylineno, msg);
+        return;
     }
+
+    // 同一行只报告一次错误
+    if (last_error_lineno == yylineno) return;
+    last_error_lineno = yylineno;
+
+    printf("Error type B at Line %d: %s\n", yylineno, msg);
 }

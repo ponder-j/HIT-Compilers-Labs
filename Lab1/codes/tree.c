@@ -85,8 +85,8 @@ void printTree(Node *root, int depth){
             printf("%s\n", root->name);
         }
     } else {
-        // 非终结符直接打印名字
-        printf("%s\n", root->name);
+        // 非终结符打印名字和行号
+        printf("%s (%d)\n", root->name, root->lineno);
     }
 
     // 递归打印子节点，层数加1
