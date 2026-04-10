@@ -34,13 +34,20 @@ syntax-c: $(YFILE)
 
 # 定义的一些伪目标
 .PHONY: clean test
+# test:
+# 	 for file in $(Testlist); do \
+#         	./parser $$file >> result.txt; \
+#         	echo "" >> result.txt; \
+#     	 done
 test:
-	 for file in $(Testlist); do \
-        	./parser $$file >> result.txt; \
-        	echo "" >> result.txt; \
-    	 done
+	mkdir -p Result
+	for file in $(Testlist); do \
+		name=$$(basename $$file .cmm); \
+		./parser $$file > Result/$$name.txt; \
+	done
 clean:
-	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
+	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output result.txt
 	rm -f $(OBJS) $(OBJS:.o=.d)
 	rm -f $(LFC) $(YFC) $(YFC:.c=.h)
 	rm -f *~
+	rm -rf Result
