@@ -47,11 +47,11 @@ id          {letter}({letter}|{digit})*
 "while"       { yylval.node = createNode("WHILE", yytext, yylineno, 1); return WHILE; }
 
 {dec_int}|{oct_int}|{hex_int} { yylval.node = createNode("INT", yytext, yylineno, 1); return INT; }
-{err_oct}   { error++; printf("Error type A at Line %d: Illegal octal number \"%s\".\n", yylineno, yytext); return INT; }
-{err_hex}   { error++; printf("Error type A at Line %d: Illegal hexadecimal number \"%s\".\n", yylineno, yytext); return INT; }
+{err_oct}   { error++; printf("Error type A at Line %d: Illegal octal number \"%s\".\n", yylineno, yytext); yylval.node = createNode("INT", yytext, yylineno, 1); return INT; }
+{err_hex}   { error++; printf("Error type A at Line %d: Illegal hexadecimal number \"%s\".\n", yylineno, yytext); yylval.node = createNode("INT", yytext, yylineno, 1); return INT; }
 
 {float_norm}|{float_exp} { yylval.node = createNode("FLOAT", yytext, yylineno, 1); return FLOAT; }
-{err_float} { error++; printf("Error type A at Line %d: Illegal floating point number \"%s\".\n", yylineno, yytext); return FLOAT; }
+{err_float} { error++; printf("Error type A at Line %d: Illegal floating point number \"%s\".\n", yylineno, yytext); yylval.node = createNode("FLOAT", yytext, yylineno, 1); return FLOAT; }
 
 {id}        { yylval.node = createNode("ID", yytext, yylineno, 1); return ID; }
 

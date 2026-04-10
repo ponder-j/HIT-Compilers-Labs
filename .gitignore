@@ -15,6 +15,7 @@ parser
 
 # 测试结果或日志输出文件
 result.txt
+Result/
 
 # 临时文件或备份文件
 *~
