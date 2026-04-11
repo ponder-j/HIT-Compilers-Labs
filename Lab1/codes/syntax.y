@@ -28,7 +28,7 @@
 %token <node> INT FLOAT ID SEMI COMMA ASSIGNOP RELOP PLUS MINUS STAR DIV AND OR DOT NOT TYPE LP RP LB RB LC RC STRUCT RETURN IF ELSE WHILE
 
 /* 结合性和优先级 */
-/* Bison 中，越靠下，优先级越高 */
+/* Bison 中，排越下面的优先级越高 */
 /* left 左结合；right 右结合；nonassoc 非结合 */
 %right ASSIGNOP
 %left OR
@@ -50,32 +50,37 @@
 
 /* High-level Definitions */
 /* $$ 代表父节点，$1, $2, ... 代表子节点 */
+/* 程序 = 一组顶层定义 */
 Program     : ExtDefList { $$ = createNode("Program", "", @$.first_line, 0); addNode(1, $$, $1); Root = $$; }
             ;
 
+/* 顶层定义列表（可为空） */
 ExtDefList  : ExtDef ExtDefList { $$ = createNode("ExtDefList", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
             | /* empty */       { $$ = NULL; }
             ;
-
+/* 声明变量（列表），声明结构体，声明函数定义，错误处理 */
 ExtDef      : Specifier ExtDecList SEMI { $$ = createNode("ExtDef", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             | Specifier SEMI            { $$ = createNode("ExtDef", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
             | Specifier FunDec CompSt   { $$ = createNode("ExtDef", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             | error SEMI                { $$ = NULL; error++; }
             ;
 
+/* 声明的变量列表 */
 ExtDecList  : VarDec { $$ = createNode("ExtDecList", "", @$.first_line, 0); addNode(1, $$, $1); }
             | VarDec COMMA ExtDecList { $$ = createNode("ExtDecList", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             ;
 
-/* Specifiers */
+/* 类型说明符：一般类型，结构体类型 */
 Specifier   : TYPE { $$ = createNode("Specifier", "", @$.first_line, 0); addNode(1, $$, $1); }
             | StructSpecifier { $$ = createNode("Specifier", "", @$.first_line, 0); addNode(1, $$, $1); }
             ;
 
+/* 结构体定义 */
 StructSpecifier : STRUCT OptTag LC DefList RC { $$ = createNode("StructSpecifier", "", @$.first_line, 0); addNode(5, $$, $1, $2, $3, $4, $5); }
                 | STRUCT Tag { $$ = createNode("StructSpecifier", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
                 ;
 
+/* 结构体名字可以是任何合法 ID 或留空 */
 OptTag      : ID { $$ = createNode("OptTag", "", @$.first_line, 0); addNode(1, $$, $1); }
             | /* empty */ { $$ = NULL; }
             ;
@@ -83,17 +88,19 @@ OptTag      : ID { $$ = createNode("OptTag", "", @$.first_line, 0); addNode(1, $
 Tag         : ID { $$ = createNode("Tag", "", @$.first_line, 0); addNode(1, $$, $1); }
             ;
 
-/* Declarators */
+/* 变量声明：普通变量，数组变量，数组变量错误处理 */
 VarDec      : ID { $$ = createNode("VarDec", "", @$.first_line, 0); addNode(1, $$, $1); }
             | VarDec LB INT RB { $$ = createNode("VarDec", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
             | VarDec LB error RB { $$ = NULL; error++; yyerror("Missing \"]\"."); }
             ;
 
+/* 函数声明：有参数，无参数 */
 FunDec      : ID LP VarList RP { $$ = createNode("FunDec", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
             | ID LP RP { $$ = createNode("FunDec", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             | ID LP error RP { $$ = NULL; error++; yyerror("Missing \")\"."); }
             ;
 
+/* 参数列表 */
 VarList     : ParamDec COMMA VarList { $$ = createNode("VarList", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             | ParamDec { $$ = createNode("VarList", "", @$.first_line, 0); addNode(1, $$, $1); }
             ;
@@ -101,7 +108,7 @@ VarList     : ParamDec COMMA VarList { $$ = createNode("VarList", "", @$.first_l
 ParamDec    : Specifier VarDec { $$ = createNode("ParamDec", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
             ;
 
-/* Statements */
+/* 复合语句：定义语句只能出现在其他语句前面；大括号括起来 */
 CompSt      : LC DefList StmtList RC { $$ = createNode("CompSt", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
             | error RC { $$ = NULL; error++; yyerror("Missing \"}\"."); }
             ;
@@ -110,6 +117,7 @@ StmtList    : Stmt StmtList { $$ = createNode("StmtList", "", @$.first_line, 0);
             | /* empty */   { $$ = NULL; }
             ;
 
+/* 单条语句 */
 Stmt        : Exp SEMI { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
             | CompSt   { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(1, $$, $1); }
             | RETURN Exp SEMI { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
