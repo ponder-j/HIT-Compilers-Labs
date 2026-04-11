@@ -36,7 +36,7 @@
 %left RELOP
 %left PLUS MINUS
 %left STAR DIV
-%right NOT
+%right NOT UMINUS  /* 负号的优先级高于乘除，且为右结合 */
 %left LP RP LB RB DOT
 
 /* 通过指定优先级的办法，避免 Bison 报告冲突，解决 if-else 悬空问题 */
@@ -128,54 +128,61 @@ Stmt        : Exp SEMI { $$ = createNode("Stmt", "", @$.first_line, 0); addNode(
             | error SEMI { $$ = NULL; error++; yyerror("Missing \";\"."); }
             ;
 
-/* Local Definitions */
+/* 定义语句列表 */
 DefList     : Def DefList { $$ = createNode("DefList", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
             | /* empty */ { $$ = NULL; }
             ;
 
+/* 单条定义语句 */
 Def         : Specifier DecList SEMI { $$ = createNode("Def", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             | error SEMI { $$ = NULL; error++; }
             ;
 
+/* 声明列表 */
 DecList     : Dec { $$ = createNode("DecList", "", @$.first_line, 0); addNode(1, $$, $1); }
             | Dec COMMA DecList { $$ = createNode("DecList", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             ;
-
+/* 单个声明 */
 Dec         : VarDec { $$ = createNode("Dec", "", @$.first_line, 0); addNode(1, $$, $1); }
             | VarDec ASSIGNOP Exp { $$ = createNode("Dec", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             ;
 
-/* Expressions */
-Exp         : Exp ASSIGNOP Exp { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | Exp AND Exp      { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | Exp OR Exp       { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | Exp RELOP Exp    { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | Exp PLUS Exp     { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | Exp MINUS Exp    { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | Exp STAR Exp     { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | Exp DIV Exp      { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | LP Exp RP        { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | MINUS Exp        { $$ = createNode("Exp", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
-            | NOT Exp          { $$ = createNode("Exp", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
-            | ID LP Args RP    { $$ = createNode("Exp", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
-            | ID LP RP         { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | Exp LB Exp RB    { $$ = createNode("Exp", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
-            | Exp DOT ID       { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
-            | ID               { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
-            | INT              { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
-            | FLOAT            { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
-            | Exp LB error RB  { $$ = NULL; error++; yyerror("Missing \"]\"."); }
-            | LP error RP      { $$ = NULL; error++; yyerror("Missing \")\"."); }
-            | ID LP error RP   { $$ = NULL; error++; yyerror("Missing \")\"."); }
+/* 表达式 */
+Exp         : Exp ASSIGNOP Exp       { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | Exp AND Exp            { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | Exp OR Exp             { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | Exp RELOP Exp          { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | Exp PLUS Exp           { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | Exp MINUS Exp          { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | Exp STAR Exp           { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | Exp DIV Exp            { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | LP Exp RP              { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | MINUS Exp %prec UMINUS { $$ = createNode("Exp", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
+            | NOT Exp                { $$ = createNode("Exp", "", @$.first_line, 0); addNode(2, $$, $1, $2); }
+            | ID LP Args RP          { $$ = createNode("Exp", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
+            | ID LP RP               { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | Exp LB Exp RB          { $$ = createNode("Exp", "", @$.first_line, 0); addNode(4, $$, $1, $2, $3, $4); }
+            | Exp DOT ID             { $$ = createNode("Exp", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
+            | ID                     { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
+            | INT                    { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
+            | FLOAT                  { $$ = createNode("Exp", "", @$.first_line, 0); addNode(1, $$, $1); }
+            | Exp LB error RB        { $$ = NULL; error++; yyerror("Missing \"]\"."); }
+            | LP error RP            { $$ = NULL; error++; yyerror("Missing \")\"."); }
+            | ID LP error RP         { $$ = NULL; error++; yyerror("Missing \")\"."); }
             ;
 
+/* 参数列表（函数调用的时候可以传入表达式） */
 Args        : Exp COMMA Args { $$ = createNode("Args", "", @$.first_line, 0); addNode(3, $$, $1, $2, $3); }
             | Exp            { $$ = createNode("Args", "", @$.first_line, 0); addNode(1, $$, $1); }
             ;
 
 %%
 
+/* 错误处理 */
+/* 当解析器读到一个完全不符合语法规则的单词，发生移进/规约失败时，Bison 会自动调用 yyerror("syntax error") */
+/* 当遇到括号不匹配等问题时，手动调用 yyerror 报告具体错误信息 */
 void yyerror(char const *msg) {
+    /* 拦截 Bison 自动报的错，等后续会不会触发更具体的报错 */
     if (!strcmp(msg, "syntax error")) {
         if (pending_error_line == -1) {
             pending_error_line = yylineno;
@@ -184,9 +191,12 @@ void yyerror(char const *msg) {
     }
 
     if (pending_error_line != -1) {
+        /* 新报错在同一行：遇到了更具体的错误，则可以扔掉之前的错误 */
         if (pending_error_line == yylineno) {
             pending_error_line = -1;
-        } else {
+        }
+        /* 新报错在不同行：报告之前的错误 */
+        else {
             if (last_error_lineno != pending_error_line) {
                 printf("Error type B at Line %d: Syntax error.\n", pending_error_line);
                 last_error_lineno = pending_error_line;
@@ -195,6 +205,7 @@ void yyerror(char const *msg) {
         }
     }
 
+    /* 实验说明写了一行最多一个错误，所以去重 */
     if (last_error_lineno != yylineno) {
         printf("Error type B at Line %d: %s\n", yylineno, msg);
         last_error_lineno = yylineno;
