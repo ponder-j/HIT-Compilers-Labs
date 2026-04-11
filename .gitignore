@@ -22,3 +22,5 @@ Result/
 
 # macOS 系统自动生成文件
 .DS_Store
+
+src/
