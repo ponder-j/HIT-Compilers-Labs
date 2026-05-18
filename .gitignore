@@ -26,7 +26,6 @@ Result/
 # 课程报告、打包文件和其它非源码交付物
 *.doc
 *.docx
-*.pdf
 *.zip
 *.tar
 *.tar.gz
