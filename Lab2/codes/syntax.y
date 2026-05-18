@@ -9,8 +9,8 @@
     extern Node* Root;
     extern int error;
 
-    int last_error_lineno = -1;   // 上次报错的行号，防止同一行重复报错
-    int pending_error_line = -1;  // 待报告的错误行号，-1 表示没有待报告的错误
+    int last_error_lineno = -1;
+    int pending_error_line = -1;
 
     void yyerror(char const *msg);
 %}

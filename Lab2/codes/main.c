@@ -1,4 +1,5 @@
 #include "tree.h"
+#include "semantic.h" // 引入语义分析头文件
 #include <stdio.h>
 
 extern int yyrestart(FILE *f);
@@ -16,12 +17,18 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  yyrestart(f); // 输入流切换到文件 f，并从第一个字符开始扫描
-  yyparse();    // Bison 生成的语法分析器会调用 yylex() 来获取词法单元，并构建语法树，最终将根节点赋值给 Root
+  yyrestart(f);
+  yyparse();
 
-  // 如果词法和语法分析过程中没有发现错误，才打印语法树
+  // 如果词法和语法分析过程中没有发现错误，开始语义分析
   if (error == 0 && Root != NULL) {
-    printTree(Root, 0);
+    // printTree(Root, 0); // 不再打印语法树
+    
+    // 1. 初始化符号表
+    initHashtable();
+    
+    // 2. 从语法树根节点开始自顶向下做语义分析
+    Program(Root);
   }
 
   delNode(Root); // 释放语法树内存空间

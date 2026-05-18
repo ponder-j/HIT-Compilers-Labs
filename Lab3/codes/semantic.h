@@ -11,60 +11,80 @@
 #define BASIC_INT 0
 #define BASIC_FLOAT 1
 
-// 为了交叉引用，Type 和 FieldList 需要前置声明
+/* 语义分析阶段对类型和符号表项的核心抽象。 */
 typedef struct Type_ *Type;
 typedef struct FieldList_ *FieldList;
 
 typedef enum SymbolKind_ {
-    SYMBOL_VARIABLE,     // 普通变量
-    SYMBOL_FUNCTION,     // 函数
-    SYMBOL_STRUCTURE,    // 结构体
-    SYMBOL_FIELD         // 结构体字段
+    SYMBOL_VARIABLE,
+    SYMBOL_FUNCTION,
+    SYMBOL_STRUCTURE,
+    SYMBOL_FIELD
 } SymbolKind;
 
-// 类型定义
 typedef struct Type_ {
-    enum { BASIC, ARRAY, STRUCTURE, FUNCTION } kind; // kind 有四种类别
-    char *structName;              // 结构体名字
+    enum { BASIC, ARRAY, STRUCTURE, FUNCTION } kind;
+    char *structName;
     union {
-        // 基本类型：0 表示 int，1 表示 float
         int basic;
-
-        // 数组类型：元素类型和数组大小
         struct {
-            Type elem; // 注意到可以递归
+            Type elem;
             int size;
         } array;
-
-        // 结构体类型：FieldList 实现
         FieldList structure;
-
-        // 函数类型：参数列表、返回值类型和参数数量
         struct {
-            FieldList params; // 参数列表使用 FieldList 实现
+            FieldList params;
             Type funcType;
             int paramNum;
         } function;
     } u;
 } Type_;
 
-// 符号表项定义
 typedef struct FieldList_ {
-    char *name;             // 变量/函数/结构体/字段/参数名
-    Type type;              // 对应的类型
-    FieldList tail;         // 链表的下一个节点
-    FieldList hashNext;     // 哈希表冲突链的下一个节点
-    SymbolKind symbolKind;  // 该节点的符号类型
-    int lineno;             // 定义该符号的行号（用于报错）
+    char *name;
+    Type type;
+    FieldList tail;
+    FieldList hashNext;
+    SymbolKind symbolKind;
+    int lineno;
 } FieldList_;
 
+/**
+ * @brief PJW 哈希函数，用于将符号名映射到哈希桶。
+ */
 unsigned int hash_pjw(char *name);
+
+/**
+ * @brief 初始化符号表哈希桶。
+ */
 void initHashtable(void);
+
+/**
+ * @brief 向符号表插入一个新符号。
+ *
+ * @return int 1 表示插入成功，0 表示已有重名符号或参数非法。
+ */
 int insert(FieldList f);
+
+/**
+ * @brief 在符号表中查找名字对应的符号项。
+ */
 FieldList search(char *name);
+
+/**
+ * @brief 判断两个类型在语义上是否等价。
+ */
 int TypeEqual(Type type1, Type type2);
 
+/**
+ * @brief 语义分析入口，对整棵语法树执行自顶向下的检查。
+ */
 void Program(Node *root);
+
+/**
+ * @brief 在符号表中预置 Lab3 的 read/write 内建函数。
+ */
+void addPredefinedFunctions(void);
 void ExtDefList(Node *node);
 void ExtDef(Node *node);
 

@@ -15,9 +15,9 @@ Node* createNode(char* name, char* text, int lineno, int isToken){
     Node* node = (Node*)malloc(sizeof(Node));
     strncpy(node->name, name, 31);
     if (text != NULL) {
-        strncpy(node->yytext, text, 31); // 终结符
+        strncpy(node->yytext, text, 31);
     } else {
-        node->yytext[0] = '\0';          // 非终结符
+        node->yytext[0] = '\0';
     }
     node->lineno = lineno;
     node->isToken = isToken;
@@ -69,7 +69,7 @@ void printTree(Node *root, int depth){
     // 先输出 depth*2 个空格，表示当前节点的层数
     for(int i = 0; i < depth; i++) printf("  ");
 
-    // 打印终结符或非终结符信息
+    // 打印终结符和非终结符信息
     if (root->isToken) {
         // 终结符打印格式
         if (strcmp(root->name, "ID") == 0 || strcmp(root->name, "TYPE") == 0) {

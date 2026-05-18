@@ -1,26 +1,47 @@
-# 编译生成的中间文件和依赖文件
+# C/C++ 编译生成物
 *.o
 *.d
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
 
-# Flex 编译产物
+# Flex/Bison 自动生成文件
 lex.yy.c
-
-# Bison 编译产物
 syntax.tab.c
 syntax.tab.h
 syntax.output
 
-# 最终的可执行文件
+# makefile 构建目标
 parser
 
-# 测试结果或日志输出文件
+# 测试结果、日志和中间代码输出
 result.txt
 Result/
+*.log
+*.ir
 
-# 临时文件或备份文件
+# 课程报告、打包文件和其它非源码交付物
+*.doc
+*.docx
+*.pdf
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# 编辑器、系统和临时文件
 *~
-
-# macOS 系统自动生成文件
+*.swp
+*.swo
 .DS_Store
+.vscode/
+.idea/
 
-src/
+# Python 缓存
+__pycache__/
+*.py[cod]
